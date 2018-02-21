@@ -1,4 +1,5 @@
 #include "scheduler.h"
+#include "stdio.h"
 
 extern THANDLER threads[MAXTHREAD];
 extern int currthread;
@@ -7,8 +8,6 @@ extern int tcount;
 extern int newthread;
 extern int blockevent;
 extern int unblockevent;
-
-#define Q 1
 
 QUEUE ready;
 QUEUE waitinginevent[MAXTHREAD];
@@ -34,7 +33,7 @@ void scheduler(int event)
 
 		changethread=1;
 	}
-
+	
 	if(event==ENDTHREAD)
 	{
 		threads[currthread].status=END;
@@ -49,24 +48,20 @@ void scheduler(int event)
 		}
 		changethread=1;
 	}
-
-	int rounds = 0;
-	// Ejecuta todos los hilos actuales que estén en ready
-	for(;;)
-	{			
+	if(event==TIMER)
+	{
+		threads[currthread].status=READY;
+		_enqueue(&ready,currthread);
+		changethread=1;
+	}
+	
+	if(changethread)
+	{
 		old=currthread;	
 		// Sacar un hilo de la cola de listos
-		next = _dequeue(&ready);		
-		// Si ya no hay procesos listos, salir
-		if((MAXTHREAD>rounds)&&(0>next || totthreads<next))	
-			return;
+		next = _dequeue(&ready);
 		threads[next].status=RUNNING;
-		for(int quant=0;Q>quant;quant++)
-		{// Cambia contexto de los hilos
-			_swapthreads(old,next);		
-			WaitThread(threads[next].tid);
-		}
-		rounds++;
+		_swapthreads(old,next);	
 	}
 }
 
