@@ -58,7 +58,7 @@ void scheduler(int event)
 		// Sacar un hilo de la cola de listos
 		next = _dequeue(&ready);		
 		// Si ya no hay procesos listos, salir
-		if((MAXTHREAD>rounds)&&(0>next || totthreads<next)))	
+		if((MAXTHREAD>rounds)&&(0>next || totthreads<next))	
 			return;
 		threads[next].status=RUNNING;
 		for(int quant=0;Q>quant;quant++)
@@ -66,7 +66,7 @@ void scheduler(int event)
 			_swapthreads(old,next);		
 			WaitThread(threads[next].tid);
 		}
-		round++;
+		rounds++;
 	}
 }
 
