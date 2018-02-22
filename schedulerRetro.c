@@ -49,39 +49,24 @@ void scheduler(int event)
 			_enqueue(&ready,waitingthread);
 		}
 		changethread=1;
+		priorities[newthread] = 0;
 	}
 
-	// Ejecuta todos los hilos actuales que estén en ready
-	for(;;)
-	{	
-		int priority=0;	
-		for(int count=0;MAXTHREAD>count;count++)
-		{
-			if(priorities[count] > priority)
-			{// Obtener la mayor prioridad
-				priority = priorities[count];
-			}
-		}
-		for(int p = 0;priority>=p;p++)
-		{
-			for(int count=0;MAXTHREAD>count;count++)
-			{
-				if(priorities[count] == p)
-				{
-					old=currthread;	
-					// Sacar un hilo de la cola de listos
-					next = _dequeue(&ready);		
-					// Si ya no hay procesos listos, salir
-					if(0>next || totthreads<next)	
-						return;
-					threads[next].status=RUNNING;
-					priorities[next] += 1;
-					// Cambia contexto de los hilos
-					_swapthreads(old,next);		
-					WaitThread(threads[next].tid);
-				}
-			}
-		}
+		if(event==TIMER)
+	{
+		threads[currthread].status=READY;
+		_enqueue(&ready,currthread);
+		changethread=1;
+		priorities[newthread] += 1;
+	}
+	
+	if(changethread)
+	{
+		old=currthread;	
+		// Sacar un hilo de la cola de listos
+		next = _dequeue(&ready);
+		threads[next].status=RUNNING;
+		_swapthreads(old,next);	
 	}
 }
 
