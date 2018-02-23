@@ -35,7 +35,7 @@ void scheduler(int event)
 	{
 		// Un nuevo hilo va a la cola de listos
 		threads[newthread].status=READY;
-		priorities[newthread] = 0;
+		priorities[currthread] = 0;
 		_enqueue(&ready,newthread);
 	}
 
@@ -62,7 +62,7 @@ void scheduler(int event)
 			_enqueue(&ready,waitingthread);
 		}
 		changethread=1;
-		priorities[newthread] = 0;
+		priorities[currthread] = 0;
 	}
 
 	if(event==TIMER)
@@ -70,14 +70,15 @@ void scheduler(int event)
 		if(feedbackPriorityChangeT())
 		{
 			changethread=1;
-			priorities[newthread] += 1;
+			priorities[currthread] -= 1;
 		}
-			threads[currthread].status=READY;
-			_enqueue(&ready,currthread);
+		threads[currthread].status=READY;
+		_enqueue(&ready,currthread);
 	}
 	
 	if(changethread)
 	{
+		priorities[currthread] += 1;
 		old=currthread;	
 		// Sacar un hilo de la cola de listos
 		next = _dequeue(&ready);
@@ -85,4 +86,3 @@ void scheduler(int event)
 		_swapthreads(old,next);	
 	}
 }
-
