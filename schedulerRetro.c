@@ -1,4 +1,5 @@
 #include "scheduler.h"
+#include "stdio.h"
 
 extern THANDLER threads[MAXTHREAD];
 extern int currthread;
@@ -12,6 +13,18 @@ QUEUE ready;
 QUEUE waitinginevent[MAXTHREAD];
 volatile static int priorities[MAXTHREAD];
 
+int feedbackPriorityChangeT()
+{
+	for(int i=0 ; MAXTHREAD>i ; i++)
+	{
+		if(priorities[i] < priorities[currthread])
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+
 void scheduler(int event)
 {
 	int old,next;
@@ -22,7 +35,7 @@ void scheduler(int event)
 	{
 		// Un nuevo hilo va a la cola de listos
 		threads[newthread].status=READY;
-		priorities[newthread] = 0;
+		priorities[currthread] = 0;
 		_enqueue(&ready,newthread);
 	}
 
@@ -49,39 +62,27 @@ void scheduler(int event)
 			_enqueue(&ready,waitingthread);
 		}
 		changethread=1;
+		priorities[currthread] = 0;
 	}
 
-	// Ejecuta todos los hilos actuales que estén en ready
-	for(;;)
-	{	
-		int priority=0;	
-		for(int count=0;MAXTHREAD>count;count++)
+	if(event==TIMER)
+	{
+		if(feedbackPriorityChangeT())
 		{
-			if(priorities[count] > priority)
-			{// Obtener la mayor prioridad
-				priority = priorities[count];
-			}
+			changethread=1;
+			priorities[currthread] -= 1;
 		}
-		for(int p = 0;priority>=p;p++)
-		{
-			for(int count=0;MAXTHREAD>count;count++)
-			{
-				if(priorities[count] == p)
-				{
-					old=currthread;	
-					// Sacar un hilo de la cola de listos
-					next = _dequeue(&ready);		
-					// Si ya no hay procesos listos, salir
-					if(0>next || totthreads<next)	
-						return;
-					threads[next].status=RUNNING;
-					priorities[next] += 1;
-					// Cambia contexto de los hilos
-					_swapthreads(old,next);		
-					WaitThread(threads[next].tid);
-				}
-			}
-		}
+		threads[currthread].status=READY;
+		_enqueue(&ready,currthread);
+	}
+	
+	if(changethread)
+	{
+		priorities[currthread] += 1;
+		old=currthread;	
+		// Sacar un hilo de la cola de listos
+		next = _dequeue(&ready);
+		threads[next].status=RUNNING;
+		_swapthreads(old,next);	
 	}
 }
-
